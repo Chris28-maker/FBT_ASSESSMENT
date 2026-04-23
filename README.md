@@ -73,7 +73,3 @@ Respects `prefers-reduced-motion`.
 - Sold-out overlay and `+` connectors are `aria-hidden`
 
 ---
-
-## Browser Support
-
-Chrome 80+, Firefox 75+, Safari 13+, Edge 80+. No polyfills needed.
