@@ -1,0 +1,732 @@
+frequently-bought-together.liquid
+
+{% comment %}
+  ============================================================
+  Section: Frequently Bought Together
+  File:    sections/frequently-bought-together.liquid
+  ============================================================
+{% endcomment %}
+
+{%- liquid
+  assign fbt_products = product.metafields.custom.complementary_products.value
+  assign has_fbt      = false
+  if fbt_products and fbt_products.size > 0
+    assign has_fbt = true
+  endif
+-%}
+
+{% if has_fbt %}
+<section
+  id="fbt-section-{{ section.id }}"
+  class="fbt-section"
+  aria-labelledby="fbt-heading-{{ section.id }}"
+  data-section-id="{{ section.id }}"
+>
+  <div class="fbt-container">
+
+    {%- comment -%} Header {%- endcomment -%}
+    <div class="fbt-header">
+      <h2 id="fbt-heading-{{ section.id }}" class="fbt-heading">
+        {{ section.settings.heading | escape }}
+      </h2>
+      {% if section.settings.subheading != blank %}
+        <p class="fbt-subheading">{{ section.settings.subheading | escape }}</p>
+      {% endif %}
+    </div>
+
+    <div class="fbt-body">
+
+      {%- comment -%} Products {%- endcomment -%}
+      <div class="fbt-products" role="list">
+
+        <div class="fbt-product" role="listitem">
+          <label class="fbt-product__inner fbt-product__inner--checked" aria-label="{{ product.title | escape }} – included">
+            <input
+              class="fbt-checkbox"
+              type="checkbox"
+              name="fbt-item"
+              value="{{ product.selected_or_first_available_variant.id }}"
+              data-price="{{ product.selected_or_first_available_variant.price }}"
+              data-title="{{ product.title | escape }}"
+              checked
+              disabled
+              aria-checked="true"
+            >
+            <div class="fbt-product__badge" aria-hidden="true">This item</div>
+            <div class="fbt-product__image-wrap">
+              {%- if product.featured_image -%}
+                <img
+                  src="{{ product.featured_image | image_url: width: 300 }}"
+                  alt="{{ product.featured_image.alt | escape | default: product.title }}"
+                  width="300" height="300"
+                  loading="lazy"
+                  class="fbt-product__image"
+                >
+              {%- else -%}
+                <div class="fbt-product__image-placeholder">
+                  {{ 'product-1' | placeholder_svg_tag: 'fbt-placeholder-svg' }}
+                </div>
+              {%- endif -%}
+              <span class="fbt-check-icon" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <circle cx="10" cy="10" r="10" fill="currentColor"/>
+                  <path d="M5.5 10L8.5 13L14.5 7" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+            </div>
+            <div class="fbt-product__info">
+              <p class="fbt-product__title">{{ product.title | truncate: 40 }}</p>
+              <p class="fbt-product__price">{{ product.selected_or_first_available_variant.price | money }}</p>
+            </div>
+          </label>
+        </div>
+
+        {%- for comp_product in fbt_products limit: 2 -%}
+          {%- assign comp_variant = comp_product.selected_or_first_available_variant -%}
+
+          <div class="fbt-connector" aria-hidden="true">
+            <span class="fbt-plus">+</span>
+          </div>
+
+          <div class="fbt-product" role="listitem">
+            <label
+              class="fbt-product__inner"
+              for="fbt-item-{{ section.id }}-{{ forloop.index }}"
+              aria-label="{{ comp_product.title | escape }} – toggle"
+            >
+              <input
+                class="fbt-checkbox"
+                type="checkbox"
+                id="fbt-item-{{ section.id }}-{{ forloop.index }}"
+                name="fbt-item"
+                value="{{ comp_variant.id }}"
+                data-price="{{ comp_variant.price }}"
+                data-title="{{ comp_product.title | escape }}"
+                {% if comp_variant.available %}{% else %}disabled aria-disabled="true"{% endif %}
+              >
+              <div class="fbt-product__image-wrap">
+                {%- if comp_product.featured_image -%}
+                  <img
+                    src="{{ comp_product.featured_image | image_url: width: 300 }}"
+                    alt="{{ comp_product.featured_image.alt | escape | default: comp_product.title }}"
+                    width="300" height="300"
+                    loading="lazy"
+                    class="fbt-product__image"
+                  >
+                {%- else -%}
+                  <div class="fbt-product__image-placeholder">
+                    {{ 'product-1' | placeholder_svg_tag: 'fbt-placeholder-svg' }}
+                  </div>
+                {%- endif -%}
+                <span class="fbt-check-icon" aria-hidden="true">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <circle cx="10" cy="10" r="10" fill="currentColor"/>
+                    <path d="M5.5 10L8.5 13L14.5 7" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </span>
+                {%- unless comp_variant.available -%}
+                  <div class="fbt-product__unavailable-overlay"><span>Sold out</span></div>
+                {%- endunless -%}
+              </div>
+              <div class="fbt-product__info">
+                <p class="fbt-product__title">{{ comp_product.title | truncate: 40 }}</p>
+                <p class="fbt-product__price">
+                  {%- if comp_variant.compare_at_price > comp_variant.price -%}
+                    <span class="fbt-price-value">{{ comp_variant.price | money }}</span>
+                    <s class="fbt-price-compare">{{ comp_variant.compare_at_price | money }}</s>
+                  {%- else -%}
+                    {{ comp_variant.price | money }}
+                  {%- endif -%}
+                </p>
+              </div>
+            </label>
+          </div>
+        {%- endfor -%}
+      </div>
+
+      <div class="fbt-cta" aria-live="polite">
+        <div class="fbt-total">
+          <span class="fbt-total__label">{{ section.settings.total_label | escape }}</span>
+          <span class="fbt-total__value" id="fbt-total-{{ section.id }}"></span>
+        </div>
+        <button
+          type="button"
+          id="fbt-atc-{{ section.id }}"
+          class="fbt-atc-btn"
+          aria-label="{{ section.settings.button_label | escape }}"
+        >
+          <span class="fbt-atc-btn__text">{{ section.settings.button_label | escape }}</span>
+          <span class="fbt-atc-btn__loader" aria-hidden="true"></span>
+        </button>
+        <p class="fbt-feedback" id="fbt-feedback-{{ section.id }}" role="status" aria-live="polite"></p>
+      </div>
+
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% stylesheet %}
+.fbt-section {
+  --fbt-accent:        #111111;
+  --fbt-accent-hover:  #2d2d2d;
+  --fbt-success:       #1a9e5c;
+  --fbt-error:         #c0392b;
+  --fbt-check:         #1a9e5c;
+  --fbt-border:        #e8e8e8;
+  --fbt-bg:            #ffffff;
+  --fbt-surface:       #ffffff;
+  --fbt-text-primary:  #111111;
+  --fbt-text-muted:    #888888;
+  --fbt-radius:        14px;
+  --fbt-radius-sm:     8px;
+  --fbt-shadow:        0 2px 10px rgba(0,0,0,.06);
+  --fbt-transition:    0.2s ease;
+}
+
+.fbt-section { margin: 40px 0; font-family: inherit; }
+
+.fbt-container {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
+}
+
+/* Header */
+.fbt-header {
+  padding: 18px 24px 14px;
+  border-bottom: 1px solid var(--fbt-border);
+  background: var(--fbt-surface);
+  text-align: center;
+}
+
+.fbt-heading {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--fbt-text-primary);
+  margin: 0 0 2px;
+}
+
+.fbt-subheading {
+  font-size: 1.5rem;
+  color: var(--fbt-text-muted);
+  margin: 0;
+}
+
+/* Body: products + CTA in one row */
+.fbt-body {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  padding: 36px 32px 28px;
+  gap: 24px;
+}
+
+/* Products row */
+.fbt-products {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+/* Card */
+.fbt-product { flex: 0 0 auto; }
+
+.fbt-product__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  border-radius: var(--fbt-radius-sm);
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: border-color var(--fbt-transition), background var(--fbt-transition);
+  position: relative;
+  text-align: center;
+  user-select: none;
+  width: 350px;
+  box-sizing: border-box;
+}
+
+.fbt-product__inner:hover {
+  background: var(--fbt-surface);
+  border-color: #e0e0e0;
+}
+
+.fbt-product__inner.fbt-product__inner--checked {
+  border-color: var(--fbt-check);
+  background: #f2fbf6;
+}
+
+.fbt-product__inner--checked .fbt-check-icon {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.fbt-checkbox {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+
+/* Badge */
+.fbt-product__badge {
+  position: absolute;
+  top: -12px;
+  left: 10px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 6px 14px;
+  border-radius: 100px;
+  background: var(--fbt-accent);
+  color: #fff;
+  line-height: 1.4;
+  z-index: 1;
+}
+
+/* Image */
+.fbt-product__image-wrap {
+  position: relative;
+  width: 310px;
+  height: 310px;
+  border-radius: var(--fbt-radius-sm);
+  overflow: hidden;
+  background: var(--fbt-surface);
+}
+
+.fbt-product__image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  padding: 6px;
+  box-sizing: border-box;
+}
+
+.fbt-product__unavailable-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--fbt-text-muted);
+}
+
+.fbt-check-icon {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  color: var(--fbt-check);
+  opacity: 0;
+  transform: scale(0.5);
+  transition: opacity var(--fbt-transition), transform var(--fbt-transition);
+  line-height: 0;
+}
+
+.fbt-check-icon svg { width: 18px; height: 18px; }
+.fbt-placeholder-svg { width: 100%; height: 100%; display: block; }
+
+/* Info */
+.fbt-product__info { width: 100%; }
+
+.fbt-product__title {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--fbt-text-primary);
+  margin: 0 0 4px;
+  line-height: 1.3;
+}
+
+.fbt-product__price {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--fbt-text-primary);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.fbt-price-compare {
+  font-weight: 400;
+  color: var(--fbt-text-muted);
+  font-size: 0.7rem;
+  text-decoration: line-through;
+}
+
+/* Connector */
+.fbt-connector {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  padding: 0 8px;
+  margin-bottom: 50px;
+}
+
+.fbt-plus {
+  font-size: 3rem;
+  font-weight: 300;
+  color: #fff;
+  background: #111;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  line-height: 1;
+  padding-bottom: 2px;
+}
+
+/* CTA — right side */
+.fbt-cta {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  border-left: 1px solid var(--fbt-border);
+  padding-left: 32px;
+  min-width: 220px;
+}
+
+.fbt-total { display: flex; flex-direction: column; gap: 2px; }
+
+.fbt-total__label {
+  font-size: 2rem;
+  color: var(--fbt-text-muted);
+  font-weight: 500;
+}
+
+.fbt-total__value {
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: var(--fbt-text-primary);
+  letter-spacing: -0.02em;
+}
+
+/* Button */
+.fbt-atc-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--fbt-accent);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 14px 22px;
+  font-size: 1.3rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background var(--fbt-transition), transform var(--fbt-transition);
+  white-space: nowrap;
+  width: 100%;
+  justify-content: center;
+  position: relative;
+}
+
+.fbt-atc-btn:hover:not(:disabled) {
+  background: var(--fbt-accent-hover);
+  transform: translateY(-1px);
+}
+
+.fbt-atc-btn:active:not(:disabled) { transform: translateY(0); }
+.fbt-atc-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.fbt-atc-btn__loader {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  margin-top: -9px;
+  margin-left: -9px;
+  transform: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255,255,255,.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: fbt-spin .65s linear infinite;
+  display: none;
+}
+
+.fbt-atc-btn.fbt-loading { gap: 0; }
+.fbt-atc-btn.fbt-loading .fbt-atc-btn__loader { display: block; }
+.fbt-atc-btn.fbt-loading .fbt-atc-btn__text { opacity: 0; }
+.fbt-atc-btn.fbt-success { background: var(--fbt-success); }
+.fbt-atc-btn.fbt-error   { background: var(--fbt-error); }
+
+@keyframes fbt-spin { to { transform: rotate(360deg); } }
+
+.fbt-feedback { font-size: 0.95rem; margin: 0; min-height: 1em; }
+.fbt-feedback.fbt-feedback--success { color: var(--fbt-success); font-weight: 700; }
+.fbt-feedback.fbt-feedback--error   { color: var(--fbt-error);   font-weight: 700; }
+
+/* Mobile */
+@media (max-width: 640px) {
+  .fbt-body {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 16px;
+    gap: 16px;
+  }
+
+  .fbt-products { flex-direction: column; gap: 4px; width: 100%; }
+
+  .fbt-product { width: 100%; }
+
+  .fbt-product__inner {
+    flex-direction: row;
+    text-align: left;
+    width: 100%;
+    padding: 10px;
+    gap: 12px;
+  }
+
+  .fbt-product__image-wrap { width: 64px; height: 64px; flex-shrink: 0; }
+
+  .fbt-product__info { flex: 1; }
+  .fbt-product__price { justify-content: flex-start; }
+
+.fbt-connector {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+}
+
+  .fbt-cta {
+    border-left: none;
+    border-top: 1px solid var(--fbt-border);
+    padding-left: 0;
+    padding-top: 16px;
+    width: 100%;
+  }
+
+  .fbt-atc-btn { width: 100%; }
+  .fbt-total__value { font-size: 1.2rem; }
+}
+
+@media (min-width: 641px) and (max-width: 900px) {
+  .fbt-body {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 20px;
+    gap: 20px;
+  }
+
+  .fbt-products {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .fbt-product__inner {
+    width: 160px;
+  }
+
+  .fbt-product__image-wrap {
+    width: 140px;
+    height: 140px;
+  }
+
+  .fbt-cta {
+    border-left: none;
+    border-top: 1px solid var(--fbt-border);
+    padding-left: 0;
+    padding-top: 16px;
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .fbt-atc-btn { width: auto; }
+
+  .fbt-connector {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    margin-bottom: 40px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fbt-product__image, .fbt-check-icon,
+  .fbt-atc-btn, .fbt-product__inner { transition: none; animation: none; }
+}
+{% endstylesheet %}
+
+{% javascript %}
+(function () {
+  'use strict';
+
+  class FrequentlyBoughtTogether {
+    constructor(section) {
+      this.section      = section;
+      this.sectionId    = section.dataset.sectionId;
+      this.checkboxes   = section.querySelectorAll('.fbt-checkbox:not([disabled])');
+      this.mainCheckbox = section.querySelector('.fbt-checkbox[disabled]');
+      this.atcBtn       = section.querySelector(`#fbt-atc-${this.sectionId}`);
+      this.totalEl      = section.querySelector(`#fbt-total-${this.sectionId}`);
+      this.feedbackEl   = section.querySelector(`#fbt-feedback-${this.sectionId}`);
+      this._bindEvents();
+      this._updateUI();
+    }
+
+    _bindEvents() {
+      this.checkboxes.forEach((cb) => {
+        cb.addEventListener('change', () => this._onCheckboxChange(cb));
+      });
+      this.atcBtn.addEventListener('click', () => this._onAddToCart());
+    }
+
+    _onCheckboxChange(checkbox) {
+      const label = checkbox.closest('.fbt-product__inner');
+      label.classList.toggle('fbt-product__inner--checked', checkbox.checked);
+      this._updateUI();
+    }
+
+    _getSelectedItems() {
+      const items = [];
+      if (this.mainCheckbox) items.push({ id: parseInt(this.mainCheckbox.value, 10), price: parseInt(this.mainCheckbox.dataset.price, 10) });
+      this.checkboxes.forEach((cb) => { if (cb.checked) items.push({ id: parseInt(cb.value, 10), price: parseInt(cb.dataset.price, 10) }); });
+      return items;
+    }
+
+    _updateUI() {
+      const items = this._getSelectedItems();
+      this.totalEl.textContent = this._formatMoney(items.reduce((s, i) => s + i.price, 0));
+      this.atcBtn.disabled = items.length === 0;
+    }
+
+async _onAddToCart() {
+  const items = this._getSelectedItems();
+  if (!items.length) return;
+  this._setButtonState('loading');
+  this._clearFeedback();
+  try {
+    const res = await fetch('/cart/add.js', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items: items.map(({ id }) => ({ id, quantity: 1 })) }),
+    });
+    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.description || `Error ${res.status}`); }
+    await res.json();
+    this._setButtonState('success');
+    this._showFeedback('success', '✓ Added to cart!');
+
+fetch('/?sections=cart-icon-bubble')
+  .then(r => r.json())
+  .then(sections => {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(sections['cart-icon-bubble'], 'text/html');
+    const source = doc.querySelector('#shopify-section-cart-icon-bubble');
+    const target = document.querySelector('.header__icon--cart');
+    if (source && target) {
+      const bubble = source.querySelector('.cart-count-bubble');
+      const existingBubble = target.querySelector('.cart-count-bubble');
+      if (bubble && existingBubble) {
+        existingBubble.innerHTML = bubble.innerHTML;
+      } else if (bubble && !existingBubble) {
+        target.appendChild(bubble);
+      }
+    }
+  });
+
+  } catch (err) {
+    this._setButtonState('error');
+    this._showFeedback('error', err.message || 'Something went wrong.');
+  }
+}
+    _setButtonState(state) {
+      const btn = this.atcBtn;
+      btn.classList.remove('fbt-loading', 'fbt-success', 'fbt-error');
+      btn.disabled = false;
+      if (state === 'loading') { btn.classList.add('fbt-loading'); btn.disabled = true; }
+      if (state === 'success') { btn.classList.add('fbt-success'); setTimeout(() => this._setButtonState('idle'), 2500); }
+      if (state === 'error')   { btn.classList.add('fbt-error');   setTimeout(() => this._setButtonState('idle'), 3000); }
+    }
+
+    _showFeedback(type, msg) { this.feedbackEl.textContent = msg; this.feedbackEl.className = `fbt-feedback fbt-feedback--${type}`; }
+    _clearFeedback() { this.feedbackEl.textContent = ''; this.feedbackEl.className = 'fbt-feedback'; }
+
+    _formatMoney(cents) {
+      if (window.Shopify && typeof window.Shopify.formatMoney === 'function') return window.Shopify.formatMoney(cents);
+      return (cents / 100).toLocaleString(undefined, { style: 'currency', currency: window.Shopify?.currency?.active || 'USD' });
+    }
+  }
+
+  function initFBT() {
+    document.querySelectorAll('.fbt-section').forEach((el) => { if (!el._fbtInstance) el._fbtInstance = new FrequentlyBoughtTogether(el); });
+  }
+
+  document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', initFBT) : initFBT();
+  document.addEventListener('shopify:section:load', initFBT);
+})();
+{% endjavascript %}
+
+{% schema %}
+{
+  "name": "Freq. Bought Together",
+  "tag": "section",
+  "limit": 1,
+  "enabled_on": {
+    "templates": ["product"]
+  },
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Frequently Bought Together"
+    },
+    {
+      "type": "text",
+      "id": "subheading",
+      "label": "Subheading",
+      "default": "Complete the look — handpicked to pair perfectly."
+    },
+    {
+      "type": "text",
+      "id": "total_label",
+      "label": "Bundle total label",
+      "default": "Bundle total"
+    },
+    {
+      "type": "text",
+      "id": "button_label",
+      "label": "Button label",
+      "default": "Add Bundle to Cart"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Freq. Bought Together"
+    }
+  ]
+}
+{% endschema %}
